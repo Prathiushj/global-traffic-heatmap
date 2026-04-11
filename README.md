@@ -1,16 +1,196 @@
-# React + Vite
+# 🌍 Global Flight Traffic Heatmap
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive web-based system that visualizes **real-time global flight movements** using geospatial data and dynamic heatmap visualization.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Project Overview
 
-## React Compiler
+The **Global Flight Traffic Heatmap** is designed to track and display live aircraft positions across the world.
+It integrates real-time aviation data, processes geospatial coordinates, and presents them on an interactive map with heatmap density visualization.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This project follows **Agile Scrum methodology** and is developed in multiple sprints.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## ✨ Features
+
+* 🌍 Interactive world map using Leaflet
+* 🔥 Real-time heatmap visualization of flight density
+* ✈️ Flight markers with detailed information
+* 🔍 Location-based search (zoom to any country/city)
+* 📊 Live flight statistics (total flights, altitude, etc.)
+* 🎛️ User controls (toggle heatmap, adjust intensity)
+* ⏱️ Auto-refresh of live data (every 30 seconds)
+* 📱 Responsive and clean UI dashboard
+
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+
+* React (Vite)
+* React Leaflet
+* Leaflet Heatmap
+
+### Backend
+
+* FastAPI (Python)
+* OpenSky Network API
+
+### Database
+
+* PostgreSQL with PostGIS
+* Supabase (Cloud Database)
+
+### Tools
+
+* Git & GitHub
+* Docker (Environment setup)
+* VS Code
+
+---
+
+## ⚙️ System Architecture
+
+Frontend → Backend API → Database → External Flight API
+
+* Frontend fetches flight data from backend
+* Backend retrieves data from OpenSky API
+* Data is validated, processed, and stored
+* Visualization is updated dynamically
+
+---
+
+## 📂 Project Structure
+
+```
+global-traffic-heatmap/
+│
+├── frontend/        # React application
+├── backend/         # FastAPI server
+├── database/        # PostgreSQL schema
+├── docs/            # Reports & documentation
+└── README.md
+```
+
+---
+
+## 🔧 Installation & Setup
+
+### 1. Clone the repository
+
+```
+git clone https://github.com/your-username/global-traffic-heatmap.git
+cd global-traffic-heatmap
+```
+
+---
+
+### 2. Backend Setup
+
+```
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+---
+
+### 3. Frontend Setup
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+### 4. Open in Browser
+
+```
+http://localhost:5173
+```
+
+---
+
+## 🔗 API Endpoint
+
+```
+GET /flights
+```
+
+Returns real-time flight data including:
+
+* Flight ID
+* Latitude & Longitude
+* Altitude
+* Timestamp
+
+---
+
+## 📊 Agile Development
+
+* **Total Sprints:** 4
+* **Total User Stories:** 18
+* **Total Story Points:** 89
+
+### Sprint Highlights
+
+* Sprint 1: Environment setup & base architecture
+* Sprint 2: Real-time data integration
+* Sprint 3: Heatmap visualization & optimization
+* Sprint 4: Deployment & documentation
+
+---
+
+## 👥 Team Members
+
+* **Sivanand K** – Backend Development
+* **Mohammed Iqlas** – Database & Cloud
+* **Prathiush Jayaprakash** – Frontend Development
+
+---
+
+## ⚠️ Challenges Faced
+
+* API data inconsistencies (missing coordinates)
+* Database connectivity issues across systems
+* UI layout and rendering optimizations
+* Synchronizing frontend and backend data
+
+---
+
+## 📈 Future Enhancements
+
+* 📍 Flight path tracking
+* 📊 Advanced analytics dashboard
+* 🌐 Global region-based filtering
+* 🚀 Cloud deployment (AWS / GCP)
+* 📱 Mobile responsiveness improvements
+
+---
+
+## 🎯 Conclusion
+
+The project successfully demonstrates a **real-time geospatial data visualization system** using modern web technologies and Agile practices.
+
+It provides an intuitive interface to understand global flight traffic patterns dynamically.
+
+---
+
+## 📜 License
+
+This project is developed for academic purposes.
+
+---
+
+## ⭐ Acknowledgements
+
+* OpenSky Network API
+* OpenStreetMap
+* Leaflet.js
+
+---
