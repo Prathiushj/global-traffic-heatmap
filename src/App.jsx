@@ -10,6 +10,19 @@ import { useEffect, useState } from "react";
 import L from "leaflet";
 import "leaflet.heat";
 
+// ✅ Fix marker icon issue
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
 // 🔥 Heatmap Layer
 function HeatmapLayer({ flights, radius }) {
   const map = useMap();
@@ -56,7 +69,6 @@ function App() {
   const [radius, setRadius] = useState(50);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // 🔍 Search states
   const [search, setSearch] = useState("");
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
 
@@ -113,7 +125,7 @@ function App() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
 
-      {/* Header */}
+      {/* ✅ Header */}
       <div
         style={{
           background: "#111827",
@@ -127,9 +139,10 @@ function App() {
         🌍 Global Flight Traffic Heatmap
       </div>
 
-      <div style={{ display: "flex", flex: 1 }}>
+      {/* ✅ Main Layout */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
 
-        {/* Sidebar */}
+        {/* ✅ Sidebar */}
         <div
           style={{
             width: "260px",
@@ -253,12 +266,12 @@ function App() {
           </ul>
         </div>
 
-        {/* Map */}
-        <div style={{ flex: 1 }}>
+        {/* ✅ Map */}
+        <div style={{ flex: 1, height: "100%" }}>
           <MapContainer
             center={mapCenter}
             zoom={5}
-            style={{ height: "100%" }}
+            style={{ height: "100%", width: "100%" }}
           >
             <ChangeMapView center={mapCenter} />
 
@@ -272,14 +285,14 @@ function App() {
               <HeatmapLayer flights={flights} radius={radius} />
             )}
 
-            {/* Flight Markers */}
+            {/* Markers */}
             {validFlights.map((f, index) => (
               <Marker key={index} position={[f.lat, f.lon]}>
                 <Popup>
                   ✈ <b>{f.flight_id}</b><br />
-                  Latitude: {f.lat} <br />
-                  Longitude: {f.lon} <br />
-                  Altitude: {f.altitude ? Math.round(f.altitude) : "N/A"} m
+                  Lat: {f.lat} <br />
+                  Lon: {f.lon} <br />
+                  Alt: {f.altitude ? Math.round(f.altitude) : "N/A"} m
                 </Popup>
               </Marker>
             ))}
