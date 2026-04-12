@@ -22,8 +22,8 @@ def get_live_flights():
         for i in range(10):
             flights.append({
                 "flight_id": f"F{i}",
-                "lat": random.uniform(10, 30),   # random latitude
-                "lon": random.uniform(70, 90),   # random longitude
+                lat = 20.5937 + random.uniform(-5, 5)
+                lon = 78.9629 + random.uniform(-5, 5)
                 "altitude": random.uniform(8000, 12000),
                 "timestamp": "2026"
             })
