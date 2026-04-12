@@ -75,7 +75,7 @@ function App() {
   useEffect(() => {
     const fetchFlights = async () => {
       try {
-        const response = await fetch("http://localhost:8000/flights");
+        const response = await fetch("https://flight-backend-q6am.onrender.com/flights");
         const data = await response.json();
         setFlights(data);
         setLastUpdated(new Date().toLocaleTimeString());
