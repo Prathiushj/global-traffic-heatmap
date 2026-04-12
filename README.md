@@ -39,6 +39,9 @@ This project follows **Agile Scrum methodology** and is developed in multiple sp
 * FastAPI (Python)
 * OpenSky Network API
 
+### ORM
+* SQLAlchemy
+
 ### Database
 
 * PostgreSQL with PostGIS
