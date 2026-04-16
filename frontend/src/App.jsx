@@ -3,14 +3,15 @@ import {
   TileLayer,
   Marker,
   Popup,
-  useMap
+  useMap,
+  useMapEvent
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useState } from "react";
+import "./App.css";
+import { useEffect, useState, useMemo } from "react";
 import L from "leaflet";
 import "leaflet.heat";
 
-// ✅ Fix marker icon issue
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -35,7 +36,8 @@ function HeatmapLayer({ flights, radius }) {
       .map(f => [f.lat, f.lon, 1]);
 
     const heatLayer = L.heatLayer(heatData, {
-      radius: radius,
+      // FIX: radius was a string from the slider — ensure it's a number
+      radius: Number(radius),
       blur: 30,
       maxZoom: 6,
       gradient: {
@@ -47,56 +49,97 @@ function HeatmapLayer({ flights, radius }) {
     });
 
     heatLayer.addTo(map);
-
-    return () => {
-      map.removeLayer(heatLayer);
-    };
+    return () => { map.removeLayer(heatLayer); };
   }, [flights, map, radius]);
 
   return null;
 }
 
-// 🔥 Change map center dynamically
+// FIX: ChangeMapView now uses useEffect so it only fires when center changes,
+// and won't fight the user while they're panning/zooming.
 function ChangeMapView({ center }) {
   const map = useMap();
-  map.setView(center, 5);
+  useEffect(() => {
+    map.setView(center, 5);
+  }, [center, map]);
   return null;
+}
+
+// Show markers only when zoomed in (zoom >= 6) to avoid performance issues
+// with hundreds of simultaneous Marker components + heatmap
+function ZoomAwareMarkers({ validFlights }) {
+  const [zoom, setZoom] = useState(5);
+
+  useMapEvent("zoomend", (e) => {
+    setZoom(e.target.getZoom());
+  });
+
+  if (zoom < 6) return null;
+
+  return validFlights.map(f => (
+    <Marker key={f.flight_id} position={[f.lat, f.lon]}>
+      <Popup>
+        ✈ <b>{f.flight_id}</b><br />
+        Lat: {f.lat}<br />
+        Lon: {f.lon}<br />
+        Alt: {f.altitude ? Math.round(f.altitude) : "N/A"} m
+      </Popup>
+    </Marker>
+  ));
 }
 
 function App() {
   const [flights, setFlights] = useState([]);
   const [showHeatmap, setShowHeatmap] = useState(true);
+  // FIX: store radius as a number, not a string
   const [radius, setRadius] = useState(50);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [error, setError] = useState(null);
 
   const [search, setSearch] = useState("");
+  const [searchError, setSearchError] = useState("");
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
 
   useEffect(() => {
     const fetchFlights = async () => {
       try {
+        setError(null);
         const response = await fetch("https://flight-backend-q6am.onrender.com/flights");
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
         const data = await response.json();
         setFlights(data);
         setLastUpdated(new Date().toLocaleTimeString());
-      } catch (error) {
-        console.error("Error fetching flights:", error);
+      } catch (err) {
+        console.error("Error fetching flights:", err);
+        setError("Failed to load flight data. Retrying...");
       }
     };
 
     fetchFlights();
     const interval = setInterval(fetchFlights, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // 🔍 Search handler
+  // FIX: memoize derived values so they don't recompute on every render
+  const validFlights = useMemo(
+    () => flights.filter(f => f.lat && f.lon),
+    [flights]
+  );
+
+  const avgAltitude = useMemo(() => {
+    if (flights.length === 0) return 0;
+    return Math.round(
+      flights.reduce((sum, f) => sum + (f.altitude || 0), 0) / flights.length
+    );
+  }, [flights]);
+
   const handleSearch = async () => {
     if (!search) return;
+    setSearchError("");
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${search}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}`
       );
       const data = await response.json();
 
@@ -105,58 +148,36 @@ function App() {
         const lon = parseFloat(data[0].lon);
         setMapCenter([lat, lon]);
       } else {
-        alert("Location not found");
+        // FIX: replaced alert() with inline error message
+        setSearchError("Location not found. Try a different name.");
       }
-    } catch (error) {
-      console.error("Search error:", error);
+    } catch (err) {
+      console.error("Search error:", err);
+      setSearchError("Search failed. Please try again.");
     }
   };
 
-  const validFlights = flights.filter(f => f.lat && f.lon);
-
-  const avgAltitude =
-    flights.length > 0
-      ? Math.round(
-          flights.reduce((sum, f) => sum + (f.altitude || 0), 0) /
-            flights.length
-        )
-      : 0;
+  // FIX: allow pressing Enter to trigger search
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="app-wrapper">
 
-      {/* ✅ Header */}
-      <div
-        style={{
-          background: "#111827",
-          color: "white",
-          padding: "12px",
-          textAlign: "center",
-          fontSize: "18px",
-          fontWeight: "bold"
-        }}
-      >
+      <div className="header">
         🌍 Global Flight Traffic Heatmap
       </div>
 
-      {/* ✅ Main Layout */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div className="main-layout">
 
-        {/* ✅ Sidebar */}
-        <div
-          style={{
-            width: "260px",
-            background: "#111827",
-            color: "white",
-            padding: "12px",
-            overflowY: "auto",
-            borderRight: "1px solid #333",
-            lineHeight: "1.6"
-          }}
-        >
+        {/* Sidebar */}
+        <div className="sidebar">
           <h3>📊 Flight Info</h3>
 
-          {flights.length === 0 ? (
+          {error && <p style={{ color: "#f87171" }}>{error}</p>}
+
+          {flights.length === 0 && !error ? (
             <p>🔄 Fetching flight data...</p>
           ) : (
             <>
@@ -169,105 +190,73 @@ function App() {
 
           <hr />
 
-          {/* 🔍 Search */}
           <h3>🔍 Search Location</h3>
-
           <input
             type="text"
+            className="search-input"
             placeholder="Enter country or city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "6px",
-              borderRadius: "6px",
-              border: "none",
-              marginBottom: "8px"
-            }}
+            // FIX: trigger search on Enter key
+            onKeyDown={handleSearchKeyDown}
           />
-
-          <button
-            onClick={handleSearch}
-            style={{
-              width: "100%",
-              padding: "6px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer"
-            }}
-          >
+          <button className="search-btn" onClick={handleSearch}>
             Search
           </button>
+          {/* FIX: inline error instead of alert() */}
+          {searchError && <p className="search-error">{searchError}</p>}
 
           <hr />
 
-          {/* Controls */}
           <h3>🎛 Controls</h3>
-
-          <label>
+          <label className="controls-label">
             <input
               type="checkbox"
               checked={showHeatmap}
-              onChange={() => setShowHeatmap(!showHeatmap)}
+              onChange={() => setShowHeatmap(prev => !prev)}
             />
             Show Heatmap
           </label>
 
           <br /><br />
-
           <p>Intensity: {radius}</p>
           <input
             type="range"
+            className="radius-slider"
             min="10"
             max="100"
+            step="1"
             value={radius}
-            onChange={(e) => setRadius(e.target.value)}
+            // FIX: convert string to number
+            onChange={(e) => setRadius(Number(e.target.value))}
           />
 
           <hr />
 
-          {/* Legend */}
           <h4>🌡 Heatmap Legend</h4>
-          <div>
-            🔵 Low <br />
-            🟢 Medium <br />
-            🟡 High <br />
+          <div className="legend">
+            🔵 Low<br />
+            🟢 Medium<br />
+            🟡 High<br />
             🔴 Very High
           </div>
 
           <hr />
 
-          {/* Flight List */}
           <h3>✈ Flight List</h3>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {flights.slice(0, 20).map((f, index) => (
-              <li
-                key={index}
-                style={{
-                  background: "#1f2937",
-                  padding: "8px",
-                  marginBottom: "6px",
-                  borderRadius: "6px",
-                  cursor: "pointer"
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#374151")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "#1f2937")
-                }
-              >
-                ✈ <b>{f.flight_id}</b> <br />
+          <ul className="flight-list">
+            {flights.slice(0, 20).map((f) => (
+              // FIX: use stable unique key instead of array index
+              <li key={f.flight_id} className="flight-item">
+                ✈ <b>{f.flight_id}</b><br />
                 Alt: {f.altitude ? Math.round(f.altitude) : "N/A"} m
               </li>
             ))}
           </ul>
         </div>
 
-        {/* ✅ Map */}
-        <div style={{ flex: 1, height: "100%" }}>
+        {/* Map */}
+        <div className="map-container">
           <MapContainer
             center={mapCenter}
             zoom={5}
@@ -280,22 +269,12 @@ function App() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Heatmap */}
             {showHeatmap && (
               <HeatmapLayer flights={flights} radius={radius} />
             )}
 
-            {/* Markers */}
-            {validFlights.map((f, index) => (
-              <Marker key={index} position={[f.lat, f.lon]}>
-                <Popup>
-                  ✈ <b>{f.flight_id}</b><br />
-                  Lat: {f.lat} <br />
-                  Lon: {f.lon} <br />
-                  Alt: {f.altitude ? Math.round(f.altitude) : "N/A"} m
-                </Popup>
-              </Marker>
-            ))}
+            {/* FIX: markers only render at zoom >= 6 to avoid performance issues */}
+            <ZoomAwareMarkers validFlights={validFlights} />
           </MapContainer>
         </div>
 
@@ -305,4 +284,3 @@ function App() {
 }
 
 export default App;
-

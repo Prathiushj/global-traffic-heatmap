@@ -1,42 +1,117 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* ── Layout ── */
+.app-wrapper {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Header ── */
+.header {
+  background: #111827;
+  color: white;
+  padding: 12px;
   text-align: center;
+  font-size: 18px;
+  font-weight: bold;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ── Sidebar ── */
+.sidebar {
+  width: 260px;
+  background: #111827;
+  color: white;
+  padding: 12px;
+  overflow-y: auto;
+  border-right: 1px solid #333;
+  line-height: 1.6;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.sidebar h3 {
+  margin-top: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.sidebar hr {
+  border-color: #333;
+  margin: 12px 0;
 }
 
-.card {
-  padding: 2em;
+/* ── Search ── */
+.search-input {
+  width: 100%;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
-.read-the-docs {
-  color: #888;
+.search-btn {
+  width: 100%;
+  padding: 6px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  background: #1d4ed8;
+}
+
+.search-error {
+  color: #f87171;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ── Controls ── */
+.controls-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radius-slider {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ── Legend ── */
+.legend {
+  font-size: 13px;
+  line-height: 2;
+}
+
+/* ── Flight list ── */
+.flight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.flight-item {
+  background: #1f2937;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.flight-item:hover {
+  background: #374151;
+}
+
+/* ── Map ── */
+.map-container {
+  flex: 1;
+  height: 100%;
 }
