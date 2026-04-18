@@ -36,7 +36,6 @@ function HeatmapLayer({ flights, radius }) {
       .map(f => [f.lat, f.lon, 1]);
 
     const heatLayer = L.heatLayer(heatData, {
-      // FIX: radius was a string from the slider — ensure it's a number
       radius: Number(radius),
       blur: 30,
       maxZoom: 6,
@@ -55,8 +54,7 @@ function HeatmapLayer({ flights, radius }) {
   return null;
 }
 
-// FIX: ChangeMapView now uses useEffect so it only fires when center changes,
-// and won't fight the user while they're panning/zooming.
+// Only fires when center prop changes — won't interrupt user panning/zooming
 function ChangeMapView({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -65,8 +63,7 @@ function ChangeMapView({ center }) {
   return null;
 }
 
-// Show markers only when zoomed in (zoom >= 6) to avoid performance issues
-// with hundreds of simultaneous Marker components + heatmap
+// Markers render only at zoom >= 6 to avoid performance issues
 function ZoomAwareMarkers({ validFlights }) {
   const [zoom, setZoom] = useState(5);
 
@@ -91,7 +88,6 @@ function ZoomAwareMarkers({ validFlights }) {
 function App() {
   const [flights, setFlights] = useState([]);
   const [showHeatmap, setShowHeatmap] = useState(true);
-  // FIX: store radius as a number, not a string
   const [radius, setRadius] = useState(50);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
@@ -99,6 +95,9 @@ function App() {
   const [search, setSearch] = useState("");
   const [searchError, setSearchError] = useState("");
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
+
+  // MOBILE: controls the bottom drawer open/close state
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const fetchFlights = async () => {
@@ -120,7 +119,6 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // FIX: memoize derived values so they don't recompute on every render
   const validFlights = useMemo(
     () => flights.filter(f => f.lat && f.lon),
     [flights]
@@ -147,8 +145,8 @@ function App() {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
         setMapCenter([lat, lon]);
+        setDrawerOpen(false); // close drawer after navigating on mobile
       } else {
-        // FIX: replaced alert() with inline error message
         setSearchError("Location not found. Try a different name.");
       }
     } catch (err) {
@@ -157,7 +155,6 @@ function App() {
     }
   };
 
-  // FIX: allow pressing Enter to trigger search
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter") handleSearch();
   };
@@ -171,8 +168,14 @@ function App() {
 
       <div className="main-layout">
 
-        {/* Sidebar */}
-        <div className="sidebar">
+        {/* MOBILE: dim overlay — closes drawer on tap */}
+        <div
+          className={`drawer-overlay${drawerOpen ? " visible" : ""}`}
+          onClick={() => setDrawerOpen(false)}
+        />
+
+        {/* Sidebar / bottom drawer */}
+        <div className={`sidebar${drawerOpen ? " drawer-open" : ""}`}>
           <h3>📊 Flight Info</h3>
 
           {error && <p style={{ color: "#f87171" }}>{error}</p>}
@@ -197,13 +200,11 @@ function App() {
             placeholder="Enter country or city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            // FIX: trigger search on Enter key
             onKeyDown={handleSearchKeyDown}
           />
           <button className="search-btn" onClick={handleSearch}>
             Search
           </button>
-          {/* FIX: inline error instead of alert() */}
           {searchError && <p className="search-error">{searchError}</p>}
 
           <hr />
@@ -227,7 +228,6 @@ function App() {
             max="100"
             step="1"
             value={radius}
-            // FIX: convert string to number
             onChange={(e) => setRadius(Number(e.target.value))}
           />
 
@@ -246,7 +246,6 @@ function App() {
           <h3>✈ Flight List</h3>
           <ul className="flight-list">
             {flights.slice(0, 20).map((f) => (
-              // FIX: use stable unique key instead of array index
               <li key={f.flight_id} className="flight-item">
                 ✈ <b>{f.flight_id}</b><br />
                 Alt: {f.altitude ? Math.round(f.altitude) : "N/A"} m
@@ -273,10 +272,18 @@ function App() {
               <HeatmapLayer flights={flights} radius={radius} />
             )}
 
-            {/* FIX: markers only render at zoom >= 6 to avoid performance issues */}
             <ZoomAwareMarkers validFlights={validFlights} />
           </MapContainer>
         </div>
+
+        {/* MOBILE: floating button to toggle the drawer */}
+        <button
+          className={`drawer-toggle${drawerOpen ? " drawer-open" : ""}`}
+          onClick={() => setDrawerOpen(prev => !prev)}
+          aria-label={drawerOpen ? "Close panel" : "Open panel"}
+        >
+          {drawerOpen ? "✕ Close" : "☰ Flight Info"}
+        </button>
 
       </div>
     </div>
